@@ -1,8 +1,6 @@
-import math
+from math import cos, sin, radians
 
-import pygame as pg
 from constants import *
-from math import cos, sin, radians, degrees
 
 
 # GUI
@@ -135,7 +133,7 @@ class Ball:
         self.dir.y = target.y - BALL_START_Y
 
         self.shoot_angle = radians(self.dir.angle_to(pg.Vector3(self.dir.x, FLOOR_LINE.y, self.dir.z)))
-        spd = BALL_SPEED * strength
+        spd = BALL_SPEED_FACTOR * strength
         self.vx = spd * cos(self.shoot_angle) * self.dir.x
         self.vy = spd * sin(self.shoot_angle) * self.dir.y
         self.vz = spd * cos(self.shoot_angle) * self.dir.z
