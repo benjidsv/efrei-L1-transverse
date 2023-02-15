@@ -1,4 +1,4 @@
-from math import cos, sin, asin, radians, sqrt
+from math import cos, sin, asin, sqrt
 
 from constants import *
 
@@ -62,19 +62,18 @@ class LoadingBar:
 class SideView:
     def __init__(self, ball):
         self.ball = ball
-        self.border = pg.Rect(MAP_X - MAP_BORDER_WIDTH, MAP_Y -
-                              MAP_BORDER_WIDTH, MAP_WIDTH + 2 * MAP_BORDER_WIDTH, MAP_HEIGHT + 2 * MAP_BORDER_WIDTH)
-        self.bg = pg.Rect(MAP_X, MAP_Y, MAP_WIDTH, MAP_HEIGHT)
-        self.floor = pg.Rect(MAP_X, MAP_Y - MAP_HEIGHT / 7 + 1, MAP_WIDTH,
-                             MAP_HEIGHT / 7)
+        self.sprite = MAP_SPRITE
+        self.rect = pg.Rect(MAP_X, MAP_Y, MAP_SPRITE.get_width(), MAP_SPRITE.get_height())
 
     def ball_position_to_map_position(self):
-        return 0, 0
+        # TODO: fix
+        return MAP_BALL_START_X + (self.ball.z - BALL_START_Z) * (MAP_GOAL_X - MAP_BALL_START_X) / (GOAL_Z -
+                                                                                                    BALL_START_Z), \
+               MAP_BALL_START_Y + (self.ball.rect.y - BALL_START_Y) * (MAP_GOAL_Y - MAP_BALL_START_Y) / (GOAL_Y -
+                                                                                                         BALL_START_Y)
 
     def draw(self, win):
-        pg.draw.rect(win, BLACK, self.border)
-        pg.draw.rect(win, BLUE, self.bg)
-        pg.draw.rect(win, GREEN, self.floor)
+        win.blit(self.sprite, (self.rect.x, self.rect.y))
         x, y = self.ball_position_to_map_position()
         win.blit(pg.transform.scale(self.ball.sprite, (MAP_BALL_SIZE, MAP_BALL_SIZE)), (x, y))
 
@@ -90,7 +89,10 @@ class Goal:
 
 class Ball:
     def __init__(self, master):
-        self.angle_from_floor_to_shoot_dir = None
+        self.a = 0
+        self.b = 0
+        self.c = 0
+        self.angle_from_floor_to_shoot_dir = 0
         self.master = master
         self.rect = pg.Rect(BALL_START_X, BALL_START_Y, BALL_START_WIDTH, BALL_START_HEIGHT)
         self.sprite = BALL_SPRITE
@@ -112,7 +114,7 @@ class Ball:
 
     @staticmethod
     def strength_to_height(s):
-        return BALL_TARGET_IF_FLOOR_SHOT + s * STRENGTH_TO_HEIGHT_ADJUSTMENT
+        return 60 + (s - 30) * -4.4
 
     def draw(self, win):
         size = self.size_by_depth()
@@ -125,28 +127,29 @@ class Ball:
         if self.shooting:
             return
 
-        self.shooting = True
         self.t0 = time_on_shoot
         print(strength, BALL_TARGET_IF_FLOOR_SHOT, self.strength_to_height(strength))
-        target.y = self.strength_to_height(strength)
-        if target.y > 170:
+        if strength < 26:
             target.y = BALL_TARGET_IF_FLOOR_SHOT
+        else:
+            target.y = self.strength_to_height(strength)
 
         self.dir.x = target.x - BALL_START_X
         self.dir.y = target.y - BALL_START_Y
 
         self.angle_from_floor_to_shoot_dir = radians(self.dir.angle_to(pg.Vector3(self.dir.x, FLOOR_LINE.y, self.dir.z))
                                                      )
-        x = target.x - WIDTH/2  # centrer x, le milieu de l'écran devient 0,0
-        angle_from_projection_to_axis = asin(GOAL_Z / sqrt(x**2 + GOAL_Z**2))
+        x = target.x - WIDTH / 2  # centrer x, le milieu de l'écran devient 0,0
+        angle_from_projection_to_axis = asin(GOAL_Z / sqrt(x ** 2 + GOAL_Z ** 2))
         v0 = self.dir.magnitude() * BALL_SPEED_FACTOR
         self.vx = v0 * cos(self.angle_from_floor_to_shoot_dir) * cos(angle_from_projection_to_axis)
+        if self.dir.x < 0:
+            self.vx *= -1
         self.vy = v0 * sin(self.angle_from_floor_to_shoot_dir)
         self.vz = v0 * cos(self.angle_from_floor_to_shoot_dir) * sin(angle_from_projection_to_axis)
 
-        #TODO: fix floor shots
-
-        print(self.vx)
+        # TODO: fix floor shots (a few pixels too low)
+        self.shooting = True
 
     def handle_physics(self, t):
         if self.catched:
@@ -159,13 +162,11 @@ class Ball:
         self.rect.x = self.vx * (t - self.t0) + BALL_START_X
         self.z = self.vz * (t - self.t0)
         if self.angle_from_floor_to_shoot_dir > 0.1:
-            self.rect.y = 0.5 * GRAVITY * (t - self.t0) ** 2 - self.vy * (
-                    t - self.t0) + self.height_adjustment_by_depth() + \
-                          BALL_START_Y
+            self.rect.y = 0.5 * GRAVITY * (t - self.t0) ** 2 - self.vy * (t - self.t0) + \
+                          self.height_adjustment_by_depth() + BALL_START_Y
         else:
             self.rect.y = self.vy * (
-                    t - self.t0) + self.height_adjustment_by_depth() + \
-                          BALL_START_Y
+                    t - self.t0) + self.height_adjustment_by_depth() + BALL_START_Y
         # print("ball physics: ", self.rect.x, self.rect.y, self.z)
 
         if self.z >= GOAL_Z:
@@ -236,7 +237,7 @@ class GoalKeeper:
             self.x0 = self.rect.x
             self.vx = self.jumping_dir * GOALKEEPER_JUMP_SPEED_X * cos(GOALKEEPER_JUMP_ANGLE)
             self.vy = GOALKEEPER_JUMP_SPEED_Y * sin(GOALKEEPER_JUMP_ANGLE if self.jumping_dir != 0
-                                                                          else GOALKEEPER_VERTICAL_JUMP_SPEED)
+                                                    else GOALKEEPER_VERTICAL_JUMP_SPEED)
 
     def try_catching(self, ball):
         if self.r_rect.colliderect(ball.rect):
