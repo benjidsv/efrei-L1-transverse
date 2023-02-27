@@ -1,16 +1,14 @@
-import pygame as pg
-from constants import *
 from drawables import *
 
 
 class Game:
     def __init__(self):
+        # Création et paramétrage de la fen^^re
         self.win = pg.display.set_mode((WIDTH, HEIGHT))
         pg.display.set_caption("Projet Transverse Prototype")
 
+        # Initialisation des variables
         self.running = False
-        self.main_menu_active = False
-        #self.pause_menu_active = False
         self.clock = pg.time.Clock()
         self.background = GameBackground()
         self.ball = Ball(self)
@@ -19,10 +17,9 @@ class Game:
         self.score = 0
 
     def draw_window(self, *drawables):
+        # Appel de la fonction draw des objets à dessiner
         for d in drawables:
             d.draw(self.win)
-
-        #pg.draw.circle(self.win, RED, (WIDTH / 2, GOAL_Y), 3)
 
         pg.display.update()
 
@@ -37,10 +34,9 @@ class Game:
                 print("no goal")
 
     def main_menu(self):
-        self.main_menu_active = True
         bg = GameBackground()
         button = Button(WIDTH/2 - 323/2, HEIGHT/2 - 50, 323, 100, "S T A R T")
-        while self.main_menu_active:
+        while True:
             self.clock.tick(MENU_FPS)
 
             for event in pg.event.get():
@@ -49,7 +45,6 @@ class Game:
                 if event.type == pg.MOUSEBUTTONDOWN:
                     mx, my = pg.mouse.get_pos()
                     if button.check_click(mx, my):
-                        self.main_menu_active = False
                         self.run()
                         return
 
@@ -107,6 +102,7 @@ class Game:
 
             self.gk.handle_movement(pressed_keys, t)
             self.ball.handle_physics(t)
+
             if m_hold:
                 loading_bar.val = min(t - click_start, MAX_SHOOT_HOLD_TIME)
 
