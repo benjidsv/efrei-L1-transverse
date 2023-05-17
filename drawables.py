@@ -70,8 +70,8 @@ class SideView:
         return MAP_BALL_START_X + (self.ball.z - BALL_START_Z) * (MAP_GOAL_X - MAP_BALL_START_X) / (GOAL_Z -
                                                                                                     BALL_START_Z), \
                MAP_BALL_START_Y + (self.ball.y - BALL_START_Y) * (MAP_GOAL_Y - MAP_BALL_START_Y) / (
-                           GOAL_Y + GOAL_HEIGHT -
-                           BALL_START_Y)
+                       GOAL_Y + GOAL_HEIGHT -
+                       BALL_START_Y)
 
     def draw(self, win):
         win.blit(self.sprite, (self.rect.x, self.rect.y))
@@ -282,3 +282,19 @@ class GoalKeeper:
         self.angle = 0
         self.jumping = False
         self.jumping_dir = 0
+
+class affichage_score:
+    def score(self, win, score_joueurA, score_joueurB):
+        carre = pg.image.load("assets/carre blanc.png").convert()
+        win.blit(carre, (1098,0))
+        police = pg.font.SysFont("arial", 20)
+        image_scoreA = police.render("Score du joueur A :", 1, (0, 0, 0))
+        win.blit(image_scoreA, (1120, 10))
+        image_scoreB = police.render("Score du joueur B :", 1, (0, 0, 0))
+        win.blit(image_scoreB, (1120, 90))
+        police_score = pg.font.SysFont("arial", 30)
+        scoreA = police_score.render("{}".format(score_joueurA), 1, (0, 0, 0))
+        win.blit(scoreA, (1180, 50))
+        scoreB = police_score.render("{}".format(score_joueurB), 1, (0, 0, 0))
+        win.blit(scoreB, (1180, 130))
+        pg.display.update()

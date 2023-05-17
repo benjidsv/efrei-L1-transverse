@@ -13,8 +13,11 @@ class Game:
         self.background = GameBackground()
         self.ball = Ball(self)
         self.gk = GoalKeeper(self)
+        self.score = affichage_score()
         self.goal = Goal()
-        self.score = 0
+        self.scoreA = 0 #* le joueur A est celui qui commence : partie impaire
+        self.scoreB = 0 #* le joueur B est celui qui commence en étant le goal : partie paire
+        self.partie = 0 #* compte nombre de partie
 
     def draw_window(self, *drawables):
         # Appel de la fonction draw des objets à dessiner
@@ -29,9 +32,16 @@ class Game:
         else:
             if self.goal.rect.colliderect(self.ball.rect):
                 print("goal")
-                self.score += 1
+                if self.partie % 2 != 0 : #* détermine quel joueur a marqué et lui ajoute 1 point
+                    self.scoreA += 1 #*
+                    print("Le joueur A a marqué !! \nScore du joueur A : ", self.scoreA, "\nScore du joueur B : ", self.scoreB) #*
+                if self.partie % 2 == 0 : #*
+                    self.scoreB += 1 #*
+                    print ("Le joueur B a marqué !! \nScore du joueur A : ", self.scoreA, "\nScore du joueur B : ", self.scoreB) #*
             else:
                 print("no goal")
+
+
 
     def main_menu(self):
         bg = GameBackground()
@@ -88,6 +98,8 @@ class Game:
                 if event.type == pg.MOUSEBUTTONDOWN:
                     click_start = t
                     m_hold = True
+                    self.partie += 1 #*
+                    print ("\n\nPartie : ", self.partie)
                 if event.type == pg.MOUSEBUTTONUP and m_hold:
                     m_hold = False
                     loading_bar.val = 0
@@ -107,6 +119,8 @@ class Game:
                 loading_bar.val = min(t - click_start, MAX_SHOOT_HOLD_TIME)
 
             self.draw_window(self.background, self.goal, self.gk, self.ball, loading_bar, side_view)
+            self.score.score(self.win, self.scoreA, self.scoreB)
+
 
 
 def main():
